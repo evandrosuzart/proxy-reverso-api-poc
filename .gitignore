@@ -1,0 +1,8 @@
+*.exe
+logs.txt
+*.key
+*.crt
+*.p12
+*.csr
+*.pem
+*.srl
