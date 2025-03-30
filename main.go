@@ -1,68 +1,159 @@
 package main
 
 import (
-        "encoding/json"
-        "fmt"
-        "net/http"
-        "strconv"
-        "strings"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
-type Response struct {
-        Msg string `json:"msg"`
+type Link struct {
+	Rel  string `json:"rel"`
+	Href string `json:"href"`
 }
 
 type Client struct {
-        Nome     string `json:"nome"`
-        Telefone string `json:"telefone"`
-        Email    string `json:"email"`
-        Codigo   int    `json:"codigo"`
+	Nome     string `json:"nome"`
+	Telefone string `json:"telefone"`
+	Email    string `json:"email"`
+	Codigo   int    `json:"codigo"`
+	Links    []Link `json:"links,omitempty"`
 }
 
-var clients = []Client{
-        {Nome: "João da Silva", Telefone: "(11) 9999-9999", Email: "joao@example.com", Codigo: 1},
-        {Nome: "Maria Oliveira", Telefone: "(21) 8888-8888", Email: "maria@example.com", Codigo: 2},
-        {Nome: "Pedro Souza", Telefone: "(31) 7777-7777", Email: "pedro@example.com", Codigo: 3},
+type Response struct {
+	Msg string `json:"msg"`
 }
 
-func clientsHandler(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(clients)
+var clients = make(map[int]Client)
+var proximoCodigo = 1
+
+func addClientLinks(client *Client, r *http.Request) {
+	codigoStr := strconv.Itoa(client.Codigo)
+	client.Links = []Link{
+		{Rel: "self", Href: fmt.Sprintf("%s://%s/clients/%s", getScheme(r), r.Host, codigoStr)},
+		{Rel: "update", Href: fmt.Sprintf("%s://%s/clients/%s", getScheme(r), r.Host, codigoStr)},
+		{Rel: "delete", Href: fmt.Sprintf("%s://%s/clients/%s", getScheme(r), r.Host, codigoStr)},
+	}
 }
 
-func clientHandler(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "application/json")
+func getScheme(r *http.Request) string {
+	if r.TLS != nil {
+		return "https"
+	}
+	return "http"
+}
 
-        // Obtem o id da URL.
-        parts := strings.Split(r.URL.Path, "/")
-        if len(parts) != 3 { // /clients/1
-                http.Error(w, "Requisição inválida", http.StatusBadRequest)
-                return
-        }
-        id, err := strconv.Atoi(parts[2])
-        if err != nil {
-                http.Error(w, "ID inválido", http.StatusBadRequest)
-                return
-        }
+func createClient(w http.ResponseWriter, r *http.Request) {
+	var novoclient Client
+	err := json.NewDecoder(r.Body).Decode(&novoclient)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-        // Busca o cliente pelo ID.
-        for _, client := range clients {
-                if client.Codigo == id {
-                        json.NewEncoder(w).Encode(client)
-                        return
-                }
-        }
+	novoclient.Codigo = proximoCodigo
+	clients[proximoCodigo] = novoclient
+	proximoCodigo++
 
-        // Cliente não encontrado.
-        w.WriteHeader(http.StatusNotFound)
-        response := Response{Msg: "Cliente não encontrado"}
-        json.NewEncoder(w).Encode(response)
+	addClientLinks(&novoclient, r) //adicionado links
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(novoclient)
+}
+
+func findAllClients(w http.ResponseWriter, r *http.Request) {
+	listaclients := []Client{}
+	for _, client := range clients {
+		tempClient := client
+		addClientLinks(&tempClient, r)
+		listaclients = append(listaclients, tempClient)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(listaclients)
+}
+
+func getClientByCode(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	codigo, err := strconv.Atoi(params["codigo"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	client, existe := clients[codigo]
+	if !existe {
+		http.NotFound(w, r)
+		return
+	}
+
+	addClientLinks(&client, r) // adicionado links
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(client)
+}
+
+func updateClient(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	codigo, err := strconv.Atoi(params["codigo"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, existe := clients[codigo]
+	if !existe {
+		http.NotFound(w, r)
+		return
+	}
+
+	var clientAtualizado Client
+	err = json.NewDecoder(r.Body).Decode(&clientAtualizado)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	clientAtualizado.Codigo = codigo
+	clients[codigo] = clientAtualizado
+
+	addClientLinks(&clientAtualizado, r) //adicionado links
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(clientAtualizado)
+}
+
+func deleteClient(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	codigo, err := strconv.Atoi(params["codigo"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, existe := clients[codigo]
+	if !existe {
+		http.NotFound(w, r)
+		return
+	}
+
+	delete(clients, codigo)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func main() {
-        http.HandleFunc("/clients", clientsHandler)
-        http.HandleFunc("/clients/", clientHandler) // Adicionado a nova rota.
-        fmt.Println("Servidor rodando na porta 8080...")
-        http.ListenAndServe(":8080", nil)
+	r := mux.NewRouter()
+
+	r.HandleFunc("/clients", createClient).Methods("POST")
+	r.HandleFunc("/clients", findAllClients).Methods("GET")
+	r.HandleFunc("/clients/{codigo}", getClientByCode).Methods("GET")
+	r.HandleFunc("/clients/{codigo}", updateClient).Methods("PUT")
+	r.HandleFunc("/clients/{codigo}", deleteClient).Methods("DELETE")
+
+	fmt.Println("Servidor rodando na porta 8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
