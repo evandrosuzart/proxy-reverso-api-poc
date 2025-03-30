@@ -1,0 +1,152 @@
+type: collection.insomnia.rest/5.0
+name: proxy-reverso-api-poc
+meta:
+  id: wrk_5753cdd362894d429ee2066a06befd7b
+  created: 1743290717008
+  modified: 1743290717008
+collection:
+  - url: https://localhost/custommer-api/clients
+    name: findAllClients
+    meta:
+      id: req_a097f9e5c67f4004a6a2c0e4649ecad4
+      created: 1743297863317
+      modified: 1743298168571
+      isPrivate: false
+      sortKey: -1743297863317
+    method: GET
+    body:
+      mimeType: application/json
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.0.1
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: https://localhost/custommer-api/clients
+    name: createClient
+    meta:
+      id: req_c2548e1115ab41cc9498370dc1135d64
+      created: 1743298098344
+      modified: 1743298175878
+      isPrivate: false
+      sortKey: -1742435462410.5
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"nome": "Pedro Souza",
+        	"telefone": "(31) 7777-7777",
+        	"email": "pedro@example.com"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.0.1
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: https://localhost/custommer-api/clients/2
+    name: getClientByCode
+    meta:
+      id: req_b70503b58f3c46aabf41f76a039cbb0f
+      created: 1743298188802
+      modified: 1743298265162
+      isPrivate: false
+      sortKey: -1742866662863.75
+    method: GET
+    body:
+      mimeType: application/json
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.0.1
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: https://localhost/custommer-api/clients/1
+    name: updateClient
+    meta:
+      id: req_7a2a46c96e934dacb3f8d9043a8d3d99
+      created: 1743298293364
+      modified: 1743298321049
+      isPrivate: false
+      sortKey: -1742004261957.25
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"nome": "Pedro Souza",
+        	"telefone": "(31) 7777-7777",
+        	"email": "pedro@example.com"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.0.1
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: https://localhost/custommer-api/clients/2
+    name: deleteClient
+    meta:
+      id: req_48d13d633e384d599652481f9b4c7ad0
+      created: 1743298343064
+      modified: 1743298357588
+      isPrivate: false
+      sortKey: -1741788661730.625
+    method: DELETE
+    body:
+      mimeType: application/json
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.0.1
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_4ba202411eb495e68420237954b9554f3dcb9c6a
+    created: 1743290717013
+    modified: 1743290717013
+environments:
+  name: Base Environment
+  meta:
+    id: env_4ba202411eb495e68420237954b9554f3dcb9c6a
+    created: 1743290717011
+    modified: 1743290717011
+    isPrivate: false
